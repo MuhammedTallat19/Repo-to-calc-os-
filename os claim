@@ -1,0 +1,72 @@
+SELECT
+    POL.SEGMENT_CODE AS POLICY_NO,
+
+    gc.ID AS CLAIM_ID,
+    gc.SEGMENT_CODE AS CLAIM_NO,
+
+    gct.ID AS TRANSACTION_ID,
+    TRN.ID AS VOUCHER_ID,
+    TRN.SEGMENT_CODE AS VOUCHER_NO,
+
+    gct.SERIAL,
+    gct.GCL_CLT_SERIAL,
+    gct.TRANS_DATE,
+    gct.CLAIM_TRANS_TYPE,
+    gct.LOSS_TYPE,
+
+    gct.TRANS_AMT,
+    gct.TRANS_AMT_LC,
+    gct.FEE_AMOUNT,
+    gct.FEE_AMOUNT_LC,
+
+    gct.NET_TRANS_AMT,
+    gct.NET_TRANS_AMT_LC,
+
+    gct.IS_POSTED,
+    gct.IS_REVERSED,
+    gct.IS_REINSURED,
+
+    /* Claim Outstanding */
+    IGENERAL.DBF_GET_OS_AMOUNT(
+        gc.ID,                 -- P_GCL_CLM_ID
+        gct.GCL_CLT_SERIAL,   -- P_GCL_CLT_SERIAL
+        gct.LOSS_TYPE,         -- P_LOSS_TYPE
+        SYSDATE,               -- P_TRANS_DATE
+        NULL,                  -- P_GST_COD_ID
+        0,                     -- P_POSTING_TYPE
+        0,                     -- P_INWARD_TYPE
+        0                      -- P_NET_POSTING
+    ) AS CLAIM_OUTSTANDING,
+
+    COLL.ID AS COLLECTION_ID,
+    COLL.SERIAL AS COLLECTION_SERIAL,
+    coll.collection_type,
+    COLL.TOTAL_DEBIT AS COLLECTION_AMOUNT,
+    COLL.STATUS AS COLLECTION_STATUS,
+    COLL.STATUS_DATE
+
+FROM IGENERAL.GCL_CLAIMS gc
+
+INNER JOIN IGENERAL.GCL_CLAIM_TRANSACTIONS gct
+    ON gc.ID = gct.GCL_CLM_ID
+
+LEFT JOIN IGENERAL.GPD_POLICIES POL
+    ON gc.GPD_PLC_ID = POL.ID
+
+LEFT JOIN ERP.FGL_TRANSACTIONS TRN
+    ON gct.ID = TRN.ID
+   AND TRN.IS_DELETED = 0
+
+LEFT JOIN ERP.FCM_COL_DETAILS DET
+    ON TRN.ID = DET.FGL_TRN_ID
+
+LEFT JOIN ERP.FCM_COLLECTION COLL
+    ON COLL.ID = DET.FCM_COL_ID
+
+WHERE gc.SEGMENT_CODE = 'C/01/ENG/EAR/01/2024/00626'
+
+ORDER BY
+    POL.SEGMENT_CODE,
+    gc.SEGMENT_CODE,
+    gct.TRANS_DATE,
+    gct.ID;
