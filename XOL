@@ -1,0 +1,458 @@
+ ( CASE WHEN TRUNC(CLM.LOSS_DATE) BETWEEN TO_DATE('01-01-2024','DD-MM-RRRR') AND TO_DATE('31-12-2024','DD-MM-RRRR') THEN 
+  
+  ( CASE WHEN 
+
+(NVL(( CASE WHEN  CLM.claim_status = 1 THEN  ---CLAIM OPEN (PARTAIL OR NOT ) 
+(select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+    --   AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+
+WHEN  CLM.claim_status IN (2,8)  THEN (SELECT SUM(TRN.NET_TRANS_AMT) -------------  IF CLAIM SETTLED 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+       AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR')<=P_TO_DATE  )   
+AND    TRANS.gcl_clt_serial NOT IN  (  SELECT DISTINCT TRNS.gcl_clt_serial
+				FROM GCL_CLAIM_TRANSACTIONS TRNS
+				WHERE TRNS.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRNS.CLAIM_TRANS_TYPE=2
+        AND  TRNS.IS_POSTED=1  --- 09-03-2016
+     -- AND  TRNS.LOSS_TYPE IN (1,4)
+      AND   TRNS.GCL_CLT_SERIAL =CLMT.SERIAL
+ --   AND   TRANS.SERIAL=TRNS.SERIAL
+        AND    (TO_DATE(TRNS.TRANS_DATE,'DD-MM-RRRR') <=P_TO_DATE ) )  )
+        
+        WHEN   CLM.claim_status IN (4,3) THEN ---  CLOSED  
+        ( CASE WHEN TRUNC(CLM.STATUS_DATE) < = P_TO_DATE   THEN 0 
+        ELSE 
+        
+        (select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+      -- AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+END)
+
+
+END),0 )  ) > 500000  THEN 
+
+(NVL(( CASE WHEN  CLM.claim_status = 1 THEN  ---CLAIM OPEN (PARTAIL OR NOT ) 
+(select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+    --   AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+
+WHEN  CLM.claim_status IN (2,8)  THEN (SELECT SUM(TRN.NET_TRANS_AMT) -------------  IF CLAIM SETTLED 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+       AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR')<=P_TO_DATE  )   
+AND    TRANS.gcl_clt_serial NOT IN  (  SELECT DISTINCT TRNS.gcl_clt_serial
+				FROM GCL_CLAIM_TRANSACTIONS TRNS
+				WHERE TRNS.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRNS.CLAIM_TRANS_TYPE=2
+        AND  TRNS.IS_POSTED=1  --- 09-03-2016
+     -- AND  TRNS.LOSS_TYPE IN (1,4)
+      AND   TRNS.GCL_CLT_SERIAL =CLMT.SERIAL
+ --   AND   TRANS.SERIAL=TRNS.SERIAL
+        AND    (TO_DATE(TRNS.TRANS_DATE,'DD-MM-RRRR') <=P_TO_DATE ) )  )
+        
+        WHEN   CLM.claim_status IN (4,3) THEN ---  CLOSED  
+        ( CASE WHEN TRUNC(CLM.STATUS_DATE) < = P_TO_DATE   THEN 0 
+        ELSE 
+        
+        (select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+      -- AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+END)
+
+
+END),0 )  ) - 500000
+
+ELSE 
+
+0  END )
+  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------18-10-2025
+WHEN TRUNC(CLM.LOSS_DATE) BETWEEN TO_DATE('01-01-2025','DD-MM-RRRR') AND TO_DATE('31-12-2026','DD-MM-RRRR') THEN 
+  
+  ( CASE WHEN 
+
+(NVL(( CASE WHEN  CLM.claim_status = 1 THEN  ---CLAIM OPEN (PARTAIL OR NOT ) 
+(select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+    --   AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+
+WHEN  CLM.claim_status IN (2,8)  THEN (SELECT SUM(TRN.NET_TRANS_AMT) -------------  IF CLAIM SETTLED 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+       AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR')<=P_TO_DATE  )   
+AND    TRANS.gcl_clt_serial NOT IN  (  SELECT DISTINCT TRNS.gcl_clt_serial
+				FROM GCL_CLAIM_TRANSACTIONS TRNS
+				WHERE TRNS.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRNS.CLAIM_TRANS_TYPE=2
+        AND  TRNS.IS_POSTED=1  --- 09-03-2016
+     -- AND  TRNS.LOSS_TYPE IN (1,4)
+      AND   TRNS.GCL_CLT_SERIAL =CLMT.SERIAL
+ --   AND   TRANS.SERIAL=TRNS.SERIAL
+        AND    (TO_DATE(TRNS.TRANS_DATE,'DD-MM-RRRR') <=P_TO_DATE ) )  )
+        
+        WHEN   CLM.claim_status IN (4,3) THEN ---  CLOSED  
+        ( CASE WHEN TRUNC(CLM.STATUS_DATE) < = P_TO_DATE   THEN 0 
+        ELSE 
+        
+        (select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+      -- AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+END)
+
+
+END),0 )  ) > 550000  THEN 
+
+(NVL(( CASE WHEN  CLM.claim_status = 1 THEN  ---CLAIM OPEN (PARTAIL OR NOT ) 
+(select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+    --   AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+
+WHEN  CLM.claim_status IN (2,8)  THEN (SELECT SUM(TRN.NET_TRANS_AMT) -------------  IF CLAIM SETTLED 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+       AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR')<=P_TO_DATE  )   
+AND    TRANS.gcl_clt_serial NOT IN  (  SELECT DISTINCT TRNS.gcl_clt_serial
+				FROM GCL_CLAIM_TRANSACTIONS TRNS
+				WHERE TRNS.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRNS.CLAIM_TRANS_TYPE=2
+        AND  TRNS.IS_POSTED=1  --- 09-03-2016
+     -- AND  TRNS.LOSS_TYPE IN (1,4)
+      AND   TRNS.GCL_CLT_SERIAL =CLMT.SERIAL
+ --   AND   TRANS.SERIAL=TRNS.SERIAL
+        AND    (TO_DATE(TRNS.TRANS_DATE,'DD-MM-RRRR') <=P_TO_DATE ) )  )
+        
+        WHEN   CLM.claim_status IN (4,3) THEN ---  CLOSED  
+        ( CASE WHEN TRUNC(CLM.STATUS_DATE) < = P_TO_DATE   THEN 0 
+        ELSE 
+        
+        (select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+      -- AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+END)
+
+
+END),0 )  ) - 550000
+
+ELSE 
+
+0  END )
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+  ELSE ------ BEFORE 
+
+( CASE WHEN 
+
+(NVL(( CASE WHEN  CLM.claim_status = 1 THEN  ---CLAIM OPEN (PARTAIL OR NOT ) 
+(select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+    --   AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+
+WHEN  CLM.claim_status IN (2,8)  THEN (SELECT SUM(TRN.NET_TRANS_AMT) -------------  IF CLAIM SETTLED 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+       AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR')<=P_TO_DATE  )   
+AND    TRANS.gcl_clt_serial NOT IN  (  SELECT DISTINCT TRNS.gcl_clt_serial
+				FROM GCL_CLAIM_TRANSACTIONS TRNS
+				WHERE TRNS.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRNS.CLAIM_TRANS_TYPE=2
+        AND  TRNS.IS_POSTED=1  --- 09-03-2016
+     -- AND  TRNS.LOSS_TYPE IN (1,4)
+      AND   TRNS.GCL_CLT_SERIAL =CLMT.SERIAL
+ --   AND   TRANS.SERIAL=TRNS.SERIAL
+        AND    (TO_DATE(TRNS.TRANS_DATE,'DD-MM-RRRR') <=P_TO_DATE ) )  )
+        
+        WHEN   CLM.claim_status IN (4,3) THEN ---  CLOSED  
+        ( CASE WHEN TRUNC(CLM.STATUS_DATE) < = P_TO_DATE   THEN 0 
+        ELSE 
+        
+        (select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+      -- AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+END)
+
+
+END),0 )  ) > 250000  AND TRUNC(CLM.LOSS_DATE) >= TO_DATE('01-01-2021','DD-MM-RRRR' ) THEN 
+
+(NVL(( CASE WHEN  CLM.claim_status = 1 THEN  ---CLAIM OPEN (PARTAIL OR NOT ) 
+(select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+    --   AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+
+WHEN  CLM.claim_status IN (2,8)  THEN (SELECT SUM(TRN.NET_TRANS_AMT) -------------  IF CLAIM SETTLED 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+       AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR')<=P_TO_DATE  )   
+AND    TRANS.gcl_clt_serial NOT IN  (  SELECT DISTINCT TRNS.gcl_clt_serial
+				FROM GCL_CLAIM_TRANSACTIONS TRNS
+				WHERE TRNS.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID )	
+        AND  TRNS.CLAIM_TRANS_TYPE=2
+        AND  TRNS.IS_POSTED=1  --- 09-03-2016
+     -- AND  TRNS.LOSS_TYPE IN (1,4)
+      AND   TRNS.GCL_CLT_SERIAL =CLMT.SERIAL
+ --   AND   TRANS.SERIAL=TRNS.SERIAL
+        AND    (TO_DATE(TRNS.TRANS_DATE,'DD-MM-RRRR') <=P_TO_DATE ) )  )
+        
+        WHEN   CLM.claim_status IN (4,3) THEN ---  CLOSED  
+        ( CASE WHEN TRUNC(CLM.STATUS_DATE) < = P_TO_DATE   THEN 0 
+        ELSE 
+        
+        (select( NVL((SELECT sum(trn.net_trans_amt)   ------- NOT PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select CM.ID  from 	GCL_CLAIMS CM  where CM.ID =CLM.ID)	
+        AND  TRN.CLAIM_TRANS_TYPE=1
+      -- AND  TRN.LOSS_TYPE IN (1,4)
+       AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') < = P_TO_DATE ) ),0)
+-
+NVL((SELECT sum(DECODE(TRN.IS_POSTED,0,trn.net_trans_amt,TRN.TRANS_AMT))    ------ RETURN VALUE IF SETLL PARTIAL 
+				FROM GCL_CLAIM_TRANSACTIONS TRN
+				WHERE TRN.GCL_CLM_ID in ( select ID  from 	GCL_CLAIMS CM   where CM.ID =CLM.ID)	
+       AND  TRN.CLAIM_TRANS_TYPE=2
+      AND  TRN.IS_POSTED=1
+     -- AND  TRN.LOSS_TYPE IN (1,4)
+      AND   TRN.GCL_CLT_SERIAL =CLMT.SERIAL
+      
+AND    (TO_DATE(TRN.TRANS_DATE,'DD-MM-RRRR') <= P_TO_DATE) ),0)
+
+)   
+
+from dual) 
+
+END)
+
+
+END),0 )  ) - 250000
+
+ELSE 
+
+0  END ) END )
