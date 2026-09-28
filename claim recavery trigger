@@ -1,0 +1,33 @@
+CREATE OR REPLACE TRIGGER IGENERAL.TRG_BLOCK_UNAUTHORIZED_CLAIM_RECOVERY_ESK_POST
+BEFORE UPDATE OF IS_POSTED
+ON IGENERAL.GCL_CLAIM_TRANSACTIONS
+FOR EACH ROW
+DECLARE
+    v_allowed NUMBER := 0;
+BEGIN
+    -- Only validate when IS_POSTED is actually changed to 1
+
+    IF NVL(:OLD.IS_POSTED, 0) <> NVL(:NEW.IS_POSTED, 0)
+       AND :NEW.IS_POSTED = 1
+       AND :NEW.CLAIM_TRANS_TYPE = 4
+    THEN
+
+        SELECT COUNT(*)
+        INTO v_allowed
+        FROM ERP_DML.CLAIM_RECOVERY_REQUEST r
+        WHERE r.TRANSCATION_ID = :NEW.ID
+          AND r.STATUS = 'Approved'
+          AND r.IS_CLEARNCE_FORM_DOWNLADED = 1
+          AND r.APPROVED_BY_ID IS NOT NULL
+          AND r.APPROVED_AT IS NOT NULL;
+
+        IF v_allowed = 0 THEN
+            RAISE_APPLICATION_ERROR(
+                -20001,
+                'ESK posting blocked: Claim Recovery approval is required.'
+            );
+        END IF;
+
+    END IF;
+
+END;
